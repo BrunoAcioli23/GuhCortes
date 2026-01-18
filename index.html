@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guh Cortes - Gerenciamento</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="logo-container">
+                <img src="LogoGuhCortes.jpg" alt="Guh Cortes" class="logo">
+                <h1 class="brand-name">Guh Cortes</h1>
+            </div>
+            <div class="user-info">
+                <span id="currentDate"></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs-nav">
+        <div class="container">
+            <div class="tabs-container">
+                <button class="tab-btn active" data-tab="inicio">Início</button>
+                <button class="tab-btn" data-tab="atendimentos">Atendimentos</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="container">
+            
+            <!-- Aba: Início -->
+            <div class="tab-content active" id="tab-inicio">
+                
+                <!-- Filtros -->
+                <section class="filters-section">
+                    <div class="filters-container">
+                        <button class="filter-btn active" data-filter="dia">Hoje</button>
+                        <button class="filter-btn" data-filter="semana">Semana</button>
+                        <button class="filter-btn" data-filter="mes">Mês</button>
+                        <button class="filter-btn" data-filter="ano">Ano</button>
+                    </div>
+                    <div class="date-range-picker">
+                        <input type="date" id="dataInicio" class="date-input">
+                        <span>até</span>
+                        <input type="date" id="dataFim" class="date-input">
+                        <button id="btnFiltrarData" class="btn-icon-only">Filtrar</button>
+                    </div>
+                </section>
+
+                <!-- Dashboard Cards -->
+                <section class="dashboard-cards">
+                    <div class="card stat-card">
+                        <div class="stat-content">
+                            <h3 class="stat-value" id="totalClientes">0</h3>
+                            <p class="stat-label">Total de Clientes</p>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="stat-content">
+                            <h3 class="stat-value" id="totalFaturamento">R$ 0,00</h3>
+                            <p class="stat-label">Faturamento</p>
+                        </div>
+                    </div>
+
+                    <div class="card stat-card">
+                        <div class="stat-content">
+                            <h3 class="stat-value" id="ticketMedio">R$ 0,00</h3>
+                            <p class="stat-label">Ticket Médio</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Gráfico de Serviços -->
+                <section class="card chart-section">
+                    <h2 class="section-title">
+                        Distribuição de Serviços
+                    </h2>
+                    <div id="servicesChart" class="chart-container"></div>
+                    <div id="noDataMessage" class="no-data-message">
+                        Nenhum atendimento registrado ainda
+                    </div>
+                </section>
+
+                <!-- Lista de Atendimentos Recentes -->
+                <section class="card">
+                    <h2 class="section-title">
+                        Atendimentos Recentes
+                    </h2>
+                    <div id="atendimentosLista" class="atendimentos-lista">
+                        <p class="no-data-message">Nenhum atendimento para exibir</p>
+                    </div>
+                </section>
+
+            </div>
+            
+            <!-- Aba: Atendimentos -->
+            <div class="tab-content" id="tab-atendimentos">
+            
+            <!-- Registro de Atendimento -->
+            <section class="card registro-section">
+                <h2 class="section-title">
+                    Novo Atendimento
+                </h2>
+                <form id="atendimentoForm" class="form">
+                    <div class="form-group">
+                        <label for="clienteNome">Nome do Cliente (opcional)</label>
+                        <input type="text" id="clienteNome" placeholder="Digite o nome do cliente">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Serviços Realizados</label>
+                        <div class="services-grid">
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-corte" value="corte" data-price="35">
+                                <label for="servico-corte">
+                                    <span class="service-name">Corte</span>
+                                    <span class="service-price">R$ 35,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-bigode" value="bigode" data-price="5">
+                                <label for="servico-bigode">
+                                    <span class="service-name">Bigode/Sobrancelha</span>
+                                    <span class="service-price">R$ 5,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-cavanhaque" value="cavanhaque" data-price="15">
+                                <label for="servico-cavanhaque">
+                                    <span class="service-name">Cavanhaque</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-alinhamento" value="alinhamento" data-price="15">
+                                <label for="servico-alinhamento">
+                                    <span class="service-name">Alinhamento</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-barba" value="barba" data-price="30">
+                                <label for="servico-barba">
+                                    <span class="service-name">Barba</span>
+                                    <span class="service-price">R$ 30,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-pigmentacao" value="pigmentacao" data-price="15">
+                                <label for="servico-pigmentacao">
+                                    <span class="service-name">Pigmentação</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-luzes" value="luzes" data-price="120">
+                                <label for="servico-luzes">
+                                    <span class="service-name">Luzes</span>
+                                    <span class="service-price">R$ 120,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-platinado" value="platinado" data-price="150">
+                                <label for="servico-platinado">
+                                    <span class="service-name">Platinado</span>
+                                    <span class="service-price">R$ 150,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="servico-platinado-grande" value="platinado-grande" data-price="230">
+                                <label for="servico-platinado-grande">
+                                    <span class="service-name">Platinado Cabelo Grande</span>
+                                    <span class="service-price">R$ 230,00</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="valorTotal">Valor Total</label>
+                        <input type="number" id="valorTotal" placeholder="0.00" step="0.01" readonly>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        Registrar Atendimento
+                    </button>
+                </form>
+            </section>
+            
+            <!-- Tabela de Atendimentos -->
+            <section class="card">
+                <h2 class="section-title">
+                    Todos os Atendimentos
+                </h2>
+                <div class="table-controls">
+                    <div class="search-box">
+                        <input type="text" id="searchAtendimentos" class="search-input" placeholder="Buscar por cliente...">
+                    </div>
+                    <div class="table-info">
+                        <span id="totalAtendimentosTabela">0 atendimentos</span>
+                    </div>
+                </div>
+                <div class="table-wrapper">
+                    <table class="atendimentos-table" id="atendimentosTable">
+                        <thead>
+                            <tr>
+                                <th>Data/Hora</th>
+                                <th>Cliente</th>
+                                <th>Serviços</th>
+                                <th>Valor</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="atendimentosTableBody">
+                            <tr class="no-data-row">
+                                <td colspan="5" class="no-data-message">Nenhum atendimento cadastrado</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            
+            </div>
+            <!-- Fim Aba: Atendimentos -->
+
+        </div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal de Edição -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Editar Atendimento</h3>
+                <button class="modal-close" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editAtendimentoForm" class="form">
+                    <input type="hidden" id="editAtendimentoId">
+                    
+                    <div class="form-group">
+                        <label for="editClienteNome">Nome do Cliente</label>
+                        <input type="text" id="editClienteNome" placeholder="Digite o nome do cliente">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Serviços Realizados</label>
+                        <div class="services-grid">
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-corte" value="corte" data-price="35">
+                                <label for="edit-servico-corte">
+                                    <span class="service-name">Corte</span>
+                                    <span class="service-price">R$ 35,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-bigode" value="bigode" data-price="5">
+                                <label for="edit-servico-bigode">
+                                    <span class="service-name">Bigode/Sobrancelha</span>
+                                    <span class="service-price">R$ 5,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-cavanhaque" value="cavanhaque" data-price="15">
+                                <label for="edit-servico-cavanhaque">
+                                    <span class="service-name">Cavanhaque</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-alinhamento" value="alinhamento" data-price="15">
+                                <label for="edit-servico-alinhamento">
+                                    <span class="service-name">Alinhamento</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-barba" value="barba" data-price="30">
+                                <label for="edit-servico-barba">
+                                    <span class="service-name">Barba</span>
+                                    <span class="service-price">R$ 30,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-pigmentacao" value="pigmentacao" data-price="15">
+                                <label for="edit-servico-pigmentacao">
+                                    <span class="service-name">Pigmentação</span>
+                                    <span class="service-price">R$ 15,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-luzes" value="luzes" data-price="120">
+                                <label for="edit-servico-luzes">
+                                    <span class="service-name">Luzes</span>
+                                    <span class="service-price">R$ 120,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-platinado" value="platinado" data-price="150">
+                                <label for="edit-servico-platinado">
+                                    <span class="service-name">Platinado</span>
+                                    <span class="service-price">R$ 150,00</span>
+                                </label>
+                            </div>
+                            <div class="service-item">
+                                <input type="checkbox" id="edit-servico-platinado-grande" value="platinado-grande" data-price="230">
+                                <label for="edit-servico-platinado-grande">
+                                    <span class="service-name">Platinado Cabelo Grande</span>
+                                    <span class="service-price">R$ 230,00</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editValorTotal">Valor Total</label>
+                        <input type="number" id="editValorTotal" placeholder="0.00" step="0.01" readonly>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-cancel" onclick="closeEditModal()">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="saveEditAtendimento()">Salvar Alterações</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <!-- App Scripts -->
+    <script src="firebase-config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
