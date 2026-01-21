@@ -42,6 +42,15 @@ function initializeApp() {
     // Carregar tabela de atendimentos
     loadAtendimentosTable();
     
+    // Inicializar gerenciamento e carregar dados iniciais
+    initializeGerenciar();
+    
+    // Atualizar grids de serviços e produtos (importante!)
+    setTimeout(() => {
+        updateServicesGrid();
+        updateConsumoGrid();
+    }, 100);
+    
     console.log('✅ Aplicativo inicializado com sucesso!');
 }
 
@@ -115,6 +124,13 @@ function switchTab(tabName) {
     
     if (activeButton) activeButton.classList.add('active');
     if (activeContent) activeContent.classList.add('active');
+    
+    // Carregar dados quando abrir aba Gerenciar
+    if (tabName === 'gerenciar') {
+        console.log('🔧 Abrindo aba Gerenciar - carregando dados...');
+        loadServicos();
+        loadProdutos();
+    }
 }
 
 // ============================================
@@ -122,36 +138,53 @@ function switchTab(tabName) {
 // ============================================
 
 function setupServiceCalculation() {
-    const checkboxes = document.querySelectorAll('.service-item input[type="checkbox"]');
+    // Remover listeners antigos para evitar duplicação
+    const allCheckboxes = document.querySelectorAll('input[type="checkbox"][data-price]');
+    allCheckboxes.forEach(cb => {
+        const newCb = cb.cloneNode(true);
+        cb.parentNode.replaceChild(newCb, cb);
+    });
+    
+    // Configurar cálculo para o formulário principal
+    const checkboxes = document.querySelectorAll('#servicosGrid input[type="checkbox"][data-price], #consumoGrid input[type="checkbox"][data-price]');
     const valorTotalInput = document.getElementById('valorTotal');
     
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            let total = 0;
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    total += parseFloat(cb.dataset.price);
-                }
-            });
-            valorTotalInput.value = total.toFixed(2);
+    const calculateTotal = () => {
+        let total = 0;
+        const allChecked = document.querySelectorAll('#servicosGrid input[type="checkbox"][data-price]:checked, #consumoGrid input[type="checkbox"][data-price]:checked');
+        allChecked.forEach(cb => {
+            total += parseFloat(cb.dataset.price) || 0;
         });
+        if (valorTotalInput) {
+            valorTotalInput.value = total.toFixed(2);
+        }
+        console.log('💰 Total calculado:', total);
+    };
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateTotal);
     });
     
-    // Mesma lógica para o formulário de edição
-    const editCheckboxes = document.querySelectorAll('#editModal .service-item input[type="checkbox"]');
+    // Configurar cálculo para o formulário de edição
+    const editCheckboxes = document.querySelectorAll('#editServicosGrid input[type="checkbox"][data-price], #editConsumoGrid input[type="checkbox"][data-price]');
     const editValorTotalInput = document.getElementById('editValorTotal');
     
-    editCheckboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            let total = 0;
-            editCheckboxes.forEach(cb => {
-                if (cb.checked) {
-                    total += parseFloat(cb.dataset.price);
-                }
-            });
-            editValorTotalInput.value = total.toFixed(2);
+    const calculateEditTotal = () => {
+        let total = 0;
+        const allChecked = document.querySelectorAll('#editServicosGrid input[type="checkbox"][data-price]:checked, #editConsumoGrid input[type="checkbox"][data-price]:checked');
+        allChecked.forEach(cb => {
+            total += parseFloat(cb.dataset.price) || 0;
         });
+        if (editValorTotalInput) {
+            editValorTotalInput.value = total.toFixed(2);
+        }
+    };
+    
+    editCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', calculateEditTotal);
     });
+    
+    console.log('✅ Cálculo automático configurado:', checkboxes.length, 'checkboxes no formulário');
 }
 
 // ============================================
@@ -173,8 +206,8 @@ async function handleFormSubmit(e) {
     
     // Validação
     if (checkboxes.length === 0) {
-        console.warn('⚠️ Nenhum serviço selecionado');
-        showToast('Selecione pelo menos um serviço!', 'error');
+        console.warn('⚠️ Nenhum serviço ou produto selecionado');
+        showToast('Selecione pelo menos um serviço ou produto!', 'error');
         return;
     }
     
@@ -184,20 +217,31 @@ async function handleFormSubmit(e) {
         return;
     }
     
-    // Coletar serviços selecionados
+    // Coletar serviços e consumo selecionados
     const servicos = [];
+    const consumo = [];
+    
     checkboxes.forEach(cb => {
         const label = cb.nextElementSibling.querySelector('.service-name').textContent;
         const price = parseFloat(cb.dataset.price);
-        servicos.push({ nome: label, valor: price });
+        const item = { nome: label, valor: price };
+        
+        // Verificar se é consumo ou serviço
+        if (cb.value.startsWith('consumo-')) {
+            consumo.push(item);
+        } else {
+            servicos.push(item);
+        }
     });
     
     console.log('📋 Serviços:', servicos);
+    console.log('🍺 Consumo:', consumo);
     
     // Criar objeto de atendimento
     const atendimento = {
         cliente: clienteNome,
         servicos: servicos,
+        consumo: consumo,
         valorTotal: valorTotal,
         data: new Date(),
         timestamp: db ? firebase.firestore.FieldValue.serverTimestamp() : new Date().getTime()
@@ -481,6 +525,10 @@ function updateAtendimentosList(atendimentos) {
             .map(s => `<span class="servico-tag">${s.nome}</span>`)
             .join('');
         
+        const consumoHtml = atendimento.consumo && atendimento.consumo.length > 0
+            ? atendimento.consumo.map(c => `<span class="servico-tag" style="background: #8b5cf6;">${c.nome}</span>`).join('')
+            : '';
+        
         const dataFormatada = formatDate(atendimento.data);
         
         const itemHtml = `
@@ -491,6 +539,7 @@ function updateAtendimentosList(atendimentos) {
                 </div>
                 <div class="atendimento-servicos">
                     ${servicosHtml}
+                    ${consumoHtml}
                 </div>
                 <div class="atendimento-data">${dataFormatada}</div>
             </div>
@@ -603,13 +652,17 @@ function renderAtendimentosTable(atendimentos) {
             .map(s => `<span class="table-servico-tag">${s.nome}</span>`)
             .join('');
         
+        const consumoHtml = atendimento.consumo && atendimento.consumo.length > 0
+            ? atendimento.consumo.map(c => `<span class="table-servico-tag" style="background: #8b5cf6;">${c.nome}</span>`).join('')
+            : '';
+        
         const dataFormatada = formatDateTime(atendimento.data);
         
         const row = document.createElement('tr');
         row.innerHTML = `
             <td class="table-data">${dataFormatada}</td>
             <td class="table-cliente">${atendimento.cliente}</td>
-            <td><div class="table-servicos">${servicosHtml}</div></td>
+            <td><div class="table-servicos">${servicosHtml}${consumoHtml}</div></td>
             <td class="table-valor">${formatCurrency(atendimento.valorTotal)}</td>
             <td>
                 <div class="table-actions">
@@ -667,18 +720,37 @@ function editAtendimento(id) {
     document.getElementById('editValorTotal').value = atendimento.valorTotal.toFixed(2);
     
     // Desmarcar todos os checkboxes
-    document.querySelectorAll('#editModal .service-item input[type="checkbox"]').forEach(cb => {
+    document.querySelectorAll('#editServicosGrid input[type="checkbox"], #editConsumoGrid input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
     
     // Marcar serviços selecionados
     atendimento.servicos.forEach(servico => {
-        const servicoNome = servico.nome.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-        const checkbox = document.querySelector(`#editModal input[value="${servicoNome}"]`);
+        const checkbox = Array.from(document.querySelectorAll('#editServicosGrid input[type="checkbox"]'))
+            .find(cb => cb.nextElementSibling.querySelector('.service-name').textContent === servico.nome);
         if (checkbox) {
             checkbox.checked = true;
         }
     });
+    
+    // Marcar consumo selecionado
+    if (atendimento.consumo && atendimento.consumo.length > 0) {
+        atendimento.consumo.forEach(item => {
+            const checkbox = Array.from(document.querySelectorAll('#editConsumoGrid input[type="checkbox"]'))
+                .find(cb => cb.nextElementSibling.querySelector('.service-name').textContent === item.nome);
+            if (checkbox) {
+                checkbox.checked = true;
+            }
+        });
+    }
+    
+    // Recalcular total
+    const editCheckboxes = document.querySelectorAll('#editServicosGrid input[type="checkbox"]:checked, #editConsumoGrid input[type="checkbox"]:checked');
+    let total = 0;
+    editCheckboxes.forEach(cb => {
+        total += parseFloat(cb.dataset.price) || 0;
+    });
+    document.getElementById('editValorTotal').value = total.toFixed(2);
     
     // Abrir modal
     document.getElementById('editModal').classList.add('show');
@@ -706,15 +778,25 @@ async function saveEditAtendimento() {
     }
     
     const servicos = [];
+    const consumo = [];
+    
     checkboxes.forEach(cb => {
         const label = cb.nextElementSibling.querySelector('.service-name').textContent;
         const price = parseFloat(cb.dataset.price);
-        servicos.push({ nome: label, valor: price });
+        const item = { nome: label, valor: price };
+        
+        // Verificar se é consumo ou serviço
+        if (cb.value.startsWith('consumo-')) {
+            consumo.push(item);
+        } else {
+            servicos.push(item);
+        }
     });
     
     const updatedData = {
         cliente: clienteNome,
         servicos: servicos,
+        consumo: consumo,
         valorTotal: valorTotal
     };
     
@@ -774,4 +856,390 @@ async function deleteAtendimento(id) {
         console.error('❌ Erro ao excluir:', error);
         showToast('Erro ao excluir atendimento!', 'error');
     }
+}
+// ============================================
+// GERENCIAR SERVIÇOS E PRODUTOS
+// ============================================
+
+// Inicializar gerenciamento
+function initializeGerenciar() {
+    const servicoForm = document.getElementById('servicoForm');
+    const produtoForm = document.getElementById('produtoForm');
+    
+    if (servicoForm) {
+        servicoForm.addEventListener('submit', handleAddServico);
+    }
+    
+    if (produtoForm) {
+        produtoForm.addEventListener('submit', handleAddProduto);
+    }
+    
+    // Inicializar serviços padrão
+    initializeDefaultServices();
+    
+    loadServicos();
+    loadProdutos();
+}
+
+// === SERVIÇOS ===
+
+function getServicosFromStorage() {
+    const servicos = localStorage.getItem('customServicos');
+    return servicos ? JSON.parse(servicos) : [];
+}
+
+function saveServicosToStorage(servicos) {
+    localStorage.setItem('customServicos', JSON.stringify(servicos));
+}
+
+// Inicializar serviços padrão se não existirem
+function initializeDefaultServices() {
+    const servicos = getServicosFromStorage();
+    
+    if (servicos.length === 0) {
+        console.log('🔧 Populando serviços padrão...');
+        
+        const defaultServices = [
+            { id: 'default-1', nome: 'Corte', valor: 35 },
+            { id: 'default-2', nome: 'Corte Social', valor: 25 },
+            { id: 'default-3', nome: 'Sobrancelha', valor: 5 },
+            { id: 'default-4', nome: 'Bigode', valor: 5 },
+            { id: 'default-5', nome: 'Cavanhaque', valor: 15 },
+            { id: 'default-6', nome: 'Alinhamento', valor: 15 },
+            { id: 'default-7', nome: 'Barba', valor: 30 },
+            { id: 'default-8', nome: 'Pigmentação', valor: 15 },
+            { id: 'default-9', nome: 'Luzes', valor: 120 },
+            { id: 'default-10', nome: 'Platinado', valor: 150 },
+            { id: 'default-11', nome: 'Platinado Cabelo Grande', valor: 230 }
+        ];
+        
+        saveServicosToStorage(defaultServices);
+        console.log('✅ Serviços padrão populados:', defaultServices.length);
+        return defaultServices;
+    }
+    
+    return servicos;
+}
+
+async function handleAddServico(e) {
+    e.preventDefault();
+    
+    const nome = document.getElementById('servicoNome').value.trim();
+    const valor = parseFloat(document.getElementById('servicoValor').value);
+    
+    if (!nome || valor <= 0) {
+        showToast('Preencha todos os campos corretamente!', 'error');
+        return;
+    }
+    
+    const servico = {
+        id: Date.now().toString(),
+        nome: nome,
+        valor: valor
+    };
+    
+    const servicos = getServicosFromStorage();
+    servicos.push(servico);
+    saveServicosToStorage(servicos);
+    
+    showToast('Serviço adicionado com sucesso!', 'success');
+    document.getElementById('servicoForm').reset();
+    loadServicos();
+    updateServicesGrid();
+}
+
+function loadServicos() {
+    const servicos = getServicosFromStorage();
+    const tbody = document.getElementById('servicosTableBody');
+    
+    if (!tbody) {
+        console.warn('⚠️ Elemento servicosTableBody não encontrado');
+        return;
+    }
+    
+    console.log('📋 Carregando serviços:', servicos);
+    
+    if (servicos.length === 0) {
+        tbody.innerHTML = '<tr class="no-data-row"><td colspan="3" class="no-data-message">Nenhum serviço cadastrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = servicos.map(servico => `
+        <tr>
+            <td class="table-cliente">${servico.nome}</td>
+            <td class="table-valor">${formatCurrency(servico.valor)}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-edit" onclick="editServico('${servico.id}')" title="Editar serviço">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar
+                    </button>
+                    <button class="btn-delete" onclick="deleteServico('${servico.id}')" title="Excluir serviço">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Excluir
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function editServico(id) {
+    const servicos = getServicosFromStorage();
+    const servico = servicos.find(s => s.id === id);
+    
+    if (!servico) {
+        showToast('Serviço não encontrado!', 'error');
+        return;
+    }
+    
+    const novoNome = prompt('Novo nome do serviço:', servico.nome);
+    if (novoNome === null) return; // Cancelou
+    
+    const novoValorStr = prompt('Novo valor do serviço (R$):', servico.valor);
+    if (novoValorStr === null) return; // Cancelou
+    
+    const novoValor = parseFloat(novoValorStr);
+    
+    if (!novoNome.trim() || isNaN(novoValor) || novoValor <= 0) {
+        showToast('Valores inválidos!', 'error');
+        return;
+    }
+    
+    servico.nome = novoNome.trim();
+    servico.valor = novoValor;
+    
+    saveServicosToStorage(servicos);
+    showToast('Serviço atualizado com sucesso!', 'success');
+    loadServicos();
+    updateServicesGrid();
+}
+
+function deleteServico(id) {
+    if (!confirm('Tem certeza que deseja excluir este serviço?')) return;
+    
+    let servicos = getServicosFromStorage();
+    servicos = servicos.filter(s => s.id !== id);
+    saveServicosToStorage(servicos);
+    
+    showToast('Serviço excluído com sucesso!', 'success');
+    loadServicos();
+    updateServicesGrid();
+}
+
+// === PRODUTOS ===
+
+function getProdutosFromStorage() {
+    const produtos = localStorage.getItem('customProdutos');
+    return produtos ? JSON.parse(produtos) : [];
+}
+
+function saveProdutosToStorage(produtos) {
+    localStorage.setItem('customProdutos', JSON.stringify(produtos));
+}
+
+async function handleAddProduto(e) {
+    e.preventDefault();
+    
+    const nome = document.getElementById('produtoNome').value.trim();
+    const valor = parseFloat(document.getElementById('produtoValor').value);
+    
+    if (!nome || valor <= 0) {
+        showToast('Preencha todos os campos corretamente!', 'error');
+        return;
+    }
+    
+    const produto = {
+        id: Date.now().toString(),
+        nome: nome,
+        valor: valor
+    };
+    
+    const produtos = getProdutosFromStorage();
+    produtos.push(produto);
+    saveProdutosToStorage(produtos);
+    
+    showToast('Produto adicionado com sucesso!', 'success');
+    document.getElementById('produtoForm').reset();
+    loadProdutos();
+    updateConsumoGrid();
+}
+
+function loadProdutos() {
+    const produtos = getProdutosFromStorage();
+    const tbody = document.getElementById('produtosTableBody');
+    
+    if (!tbody) {
+        console.warn('⚠️ Elemento produtosTableBody não encontrado');
+        return;
+    }
+    
+    console.log('🍺 Carregando produtos:', produtos);
+    
+    if (produtos.length === 0) {
+        tbody.innerHTML = '<tr class="no-data-row"><td colspan="3" class="no-data-message">Nenhum produto cadastrado</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = produtos.map(produto => `
+        <tr>
+            <td class="table-cliente">${produto.nome}</td>
+            <td class="table-valor">${formatCurrency(produto.valor)}</td>
+            <td>
+                <div class="table-actions">
+                    <button class="btn-edit" onclick="editProduto('${produto.id}')" title="Editar produto">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        Editar
+                    </button>
+                    <button class="btn-delete" onclick="deleteProduto('${produto.id}')" title="Excluir produto">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                            <line x1="10" y1="11" x2="10" y2="17"></line>
+                            <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        Excluir
+                    </button>
+                </div>
+            </td>
+        </tr>
+    `).join('');
+}
+
+function editProduto(id) {
+    const produtos = getProdutosFromStorage();
+    const produto = produtos.find(p => p.id === id);
+    
+    if (!produto) {
+        showToast('Produto não encontrado!', 'error');
+        return;
+    }
+    
+    const novoNome = prompt('Novo nome do produto:', produto.nome);
+    if (novoNome === null) return; // Cancelou
+    
+    const novoValorStr = prompt('Novo valor do produto (R$):', produto.valor);
+    if (novoValorStr === null) return; // Cancelou
+    
+    const novoValor = parseFloat(novoValorStr);
+    
+    if (!novoNome.trim() || isNaN(novoValor) || novoValor <= 0) {
+        showToast('Valores inválidos!', 'error');
+        return;
+    }
+    
+    produto.nome = novoNome.trim();
+    produto.valor = novoValor;
+    
+    saveProdutosToStorage(produtos);
+    showToast('Produto atualizado com sucesso!', 'success');
+    loadProdutos();
+    updateConsumoGrid();
+}
+
+function deleteProduto(id) {
+    if (!confirm('Tem certeza que deseja excluir este produto?')) return;
+    
+    let produtos = getProdutosFromStorage();
+    produtos = produtos.filter(p => p.id !== id);
+    saveProdutosToStorage(produtos);
+    
+    showToast('Produto excluído com sucesso!', 'success');
+    loadProdutos();
+    updateConsumoGrid();
+}
+
+// === ATUALIZAR GRIDS DE SERVIÇOS E CONSUMO ===
+
+function updateServicesGrid() {
+    // Garantir que serviços padrão existam
+    const servicos = initializeDefaultServices();
+    
+    const servicoGrid = document.getElementById('servicosGrid');
+    const editServicoGrid = document.getElementById('editServicosGrid');
+    
+    if (!servicoGrid) {
+        console.warn('⚠️ Grid de serviços não encontrado');
+        return;
+    }
+    
+    console.log('🔄 Atualizando grid de serviços. Total:', servicos.length);
+    
+    // Criar HTML dos serviços
+    const createServiceHTML = (servico, prefix = '') => `
+        <div class="service-item">
+            <input type="checkbox" id="${prefix}servico-${servico.id}" value="${servico.id}" data-price="${servico.valor}">
+            <label for="${prefix}servico-${servico.id}">
+                <span class="service-name">${servico.nome}</span>
+                <span class="service-price">R$ ${servico.valor.toFixed(2)}</span>
+            </label>
+        </div>
+    `;
+    
+    // Preencher grid do formulário principal
+    if (servicos.length === 0) {
+        servicoGrid.innerHTML = '<p class="no-data-message">Nenhum serviço cadastrado. Vá em Gerenciar para adicionar serviços.</p>';
+    } else {
+        servicoGrid.innerHTML = servicos.map(s => createServiceHTML(s)).join('');
+    }
+    
+    // Preencher grid do modal de edição
+    if (editServicoGrid) {
+        if (servicos.length === 0) {
+            editServicoGrid.innerHTML = '<p class="no-data-message">Nenhum serviço cadastrado.</p>';
+        } else {
+            editServicoGrid.innerHTML = servicos.map(s => createServiceHTML(s, 'edit-')).join('');
+        }
+    }
+    
+    // Reconfigurar cálculo automático
+    setupServiceCalculation();
+    
+    console.log('✅ Grid de serviços atualizado');
+}
+
+function updateConsumoGrid() {
+    const produtos = getProdutosFromStorage();
+    const consumoGrid = document.getElementById('consumoGrid');
+    const editConsumoGrid = document.getElementById('editConsumoGrid');
+    
+    console.log('🔄 Atualizando grid de consumo. Total:', produtos.length);
+    
+    const grids = [
+        { element: consumoGrid, prefix: 'consumoGrid' },
+        { element: editConsumoGrid, prefix: 'editConsumoGrid' }
+    ];
+    
+    grids.forEach(({ element, prefix }) => {
+        if (!element) return;
+        
+        if (produtos.length === 0) {
+            element.innerHTML = '<p class="no-data-message">Nenhum produto cadastrado. Vá em Gerenciar para adicionar produtos.</p>';
+            return;
+        }
+        
+        element.innerHTML = produtos.map(produto => `
+            <div class="service-item">
+                <input type="checkbox" id="${prefix}-${produto.id}" value="consumo-${produto.id}" data-price="${produto.valor}">
+                <label for="${prefix}-${produto.id}">
+                    <span class="service-name">${produto.nome}</span>
+                    <span class="service-price">R$ ${produto.valor.toFixed(2)}</span>
+                </label>
+            </div>
+        `).join('');
+    });
+    
+    // Reconfigurar cálculo automático
+    setupServiceCalculation();
 }
