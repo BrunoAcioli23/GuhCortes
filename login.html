@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BarberShop Manager - Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="auth-page">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">EfforeBarber</h1>
+                <p class="auth-subtitle">Sistema de gerenciamento para barbearias</p>
+            </div>
+
+            <!-- Formulário de Login -->
+            <form id="loginForm" class="auth-form">
+                <h2 class="form-title">Entrar na sua conta</h2>
+                
+                <div class="form-group">
+                    <label for="loginEmail">E-mail</label>
+                    <input type="email" id="loginEmail" required placeholder="seu@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Senha</label>
+                    <input type="password" id="loginPassword" required placeholder="Sua senha">
+                </div>
+
+                <button type="submit" class="btn-primary">Entrar</button>
+
+                <p class="auth-switch">
+                    Não tem uma conta? <a href="#" id="showRegister">Cadastre-se</a>
+                </p>
+            </form>
+
+            <!-- Formulário de Cadastro -->
+            <form id="registerForm" class="auth-form" style="display: none;">
+                <h2 class="form-title">Criar nova conta</h2>
+                
+                <div class="form-group">
+                    <label for="registerBarbeariaName">Nome da Barbearia</label>
+                    <input type="text" id="registerBarbeariaName" required placeholder="Ex: Guh Cortes">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerOwnerName">Seu Nome</label>
+                    <input type="text" id="registerOwnerName" required placeholder="Seu nome completo">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerEmail">E-mail</label>
+                    <input type="email" id="registerEmail" required placeholder="seu@email.com">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPassword">Senha</label>
+                    <input type="password" id="registerPassword" required placeholder="Mínimo 6 caracteres">
+                </div>
+
+                <div class="form-group">
+                    <label for="registerPasswordConfirm">Confirmar Senha</label>
+                    <input type="password" id="registerPasswordConfirm" required placeholder="Digite a senha novamente">
+                </div>
+
+                <button type="submit" class="btn-primary">Criar Conta</button>
+
+                <p class="auth-switch">
+                    Já tem uma conta? <a href="#" id="showLogin">Faça login</a>
+                </p>
+            </form>
+
+            <div id="authMessage" class="auth-message"></div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>

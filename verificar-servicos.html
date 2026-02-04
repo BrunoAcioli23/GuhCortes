@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verificar Serviços - Guh Cortes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .container {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #bb86fc;
+            margin-bottom: 10px;
+        }
+        .info {
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid #bb86fc;
+            color: #bb86fc;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid rgba(187, 134, 252, 0.2);
+        }
+        th {
+            background: rgba(187, 134, 252, 0.2);
+            color: #bb86fc;
+            font-weight: bold;
+        }
+        tr:hover {
+            background: rgba(187, 134, 252, 0.05);
+        }
+        .valor {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        button {
+            background: #bb86fc;
+            color: #000;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #9d6fd4;
+        }
+        #loading {
+            text-align: center;
+            padding: 30px;
+            color: #bb86fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Verificar Serviços do Guh Cortes</h1>
+        
+        <div class="info">
+            <strong>Barbearia ID:</strong> 2uv7znnXeGVeIG6zdUchArLHSFD3<br>
+            <strong>Barbearia:</strong> Guh Cortes
+        </div>
+
+        <button onclick="verificarServicos()">🔄 Verificar Serviços</button>
+
+        <div id="loading" style="display: none;">
+            Carregando dados do Firestore...
+        </div>
+
+        <div id="resultado"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const barbeariaId = '2uv7znnXeGVeIG6zdUchArLHSFD3';
+        const db = firebase.firestore();
+
+        async function verificarServicos() {
+            const loadingDiv = document.getElementById('loading');
+            const resultadoDiv = document.getElementById('resultado');
+            
+            loadingDiv.style.display = 'block';
+            resultadoDiv.innerHTML = '';
+
+            try {
+                console.log('Buscando dados da barbearia...');
+                
+                const barbeariaRef = db.collection('barbearias').doc(barbeariaId);
+                const barbeariaDoc = await barbeariaRef.get();
+                
+                loadingDiv.style.display = 'none';
+
+                if (!barbeariaDoc.exists) {
+                    resultadoDiv.innerHTML = '<div class="error"><strong>❌ Erro:</strong> Barbearia não encontrada no banco de dados!</div>';
+                    return;
+                }
+
+                const dados = barbeariaDoc.data();
+                const servicos = dados.servicos || [];
+
+                console.log('Dados carregados:', dados);
+                console.log('Serviços:', servicos);
+
+                if (servicos.length === 0) {
+                    resultadoDiv.innerHTML = `
+                        <div class="error">
+                            <strong>⚠️ Nenhum serviço cadastrado!</strong><br><br>
+                            A barbearia existe no banco de dados, mas não possui serviços cadastrados.<br>
+                            Você precisa cadastrar os serviços usando o arquivo <strong>cadastrar-servicos-guh.html</strong>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Montar tabela com serviços
+                let html = `
+                    <div class="success">
+                        <strong>✅ Serviços encontrados:</strong> ${servicos.length}
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nome</th>
+                                <th>Valor</th>
+                                <th>ID</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                servicos.forEach((servico, index) => {
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${servico.nome}</td>
+                            <td class="valor">R$ ${servico.valor.toFixed(2)}</td>
+                            <td style="font-size: 12px; color: #888;">${servico.id}</td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                resultadoDiv.innerHTML = html;
+
+            } catch (error) {
+                loadingDiv.style.display = 'none';
+                console.error('Erro ao verificar serviços:', error);
+                resultadoDiv.innerHTML = `
+                    <div class="error">
+                        <strong>❌ Erro ao conectar com o Firestore:</strong><br>
+                        ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        // Verificar automaticamente ao carregar
+        window.addEventListener('load', () => {
+            console.log('✅ Firebase conectado');
+            setTimeout(verificarServicos, 500);
+        });
+    </script>
+</body>
+</html>

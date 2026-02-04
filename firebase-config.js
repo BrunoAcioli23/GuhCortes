@@ -2,15 +2,14 @@
 // CONFIGURAÇÃO DO FIREBASE
 // ============================================
 
-const firebaseConfig = {
-    apiKey: "AIzaSyArWqXC_cztreMeEJ5juqKpAsY4TBEIGMw",
-    authDomain: "guhcortes-b5770.firebaseapp.com",
-    projectId: "guhcortes-b5770",
-    storageBucket: "guhcortes-b5770.firebasestorage.app",
-    messagingSenderId: "266695093035",
-    appId: "1:266695093035:web:c84b419f949e466570f36e",
-    measurementId: "G-34MEL8FMNT"
-};
+  const firebaseConfig = {
+    apiKey: "AIzaSyAH-_zCpZ7Pb9405V7c3dFyJqsh3zWGUYY",
+    authDomain: "effore-barber.firebaseapp.com",
+    projectId: "effore-barber",
+    storageBucket: "effore-barber.firebasestorage.app",
+    messagingSenderId: "1049002743190",
+    appId: "1:1049002743190:web:59d9fb71c8b4be88e4f9b7"
+  };
 
 // Inicializar Firebase
 try {

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração de Dados - Guh Cortes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 32px;
+        }
+        
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .log-line {
+            margin: 5px 0;
+        }
+        
+        .log-success {
+            color: #28a745;
+        }
+        
+        .log-error {
+            color: #dc3545;
+        }
+        
+        .log-info {
+            color: #17a2b8;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .input-group {
+            margin: 20px 0;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 12px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Migração de Dados</h1>
+        <p style="color: #666; margin-bottom: 20px;">Migrar atendimentos antigos do Guh Cortes para o sistema multi-barbearia</p>
+        
+        <div class="info">
+            <strong>📋 O que será feito:</strong><br>
+            1. Buscar todos os atendimentos sem <code>barbeariaId</code><br>
+            2. Adicionar o <code>barbeariaId</code> da sua barbearia<br>
+            3. Atualizar no Firebase<br>
+            4. Pronto! ✅
+        </div>
+        
+        <div class="input-group">
+            <label for="barbeariaId">🔑 ID da Barbearia (userId):</label>
+            <input type="text" id="barbeariaId" placeholder="Cole aqui o ID da sua barbearia" autocomplete="off">
+            <small style="color: #666; display: block; margin-top: 5px;">
+                💡 Dica: Acesse o console (F12) no dashboard e copie o valor de <code>currentBarbeariaId</code>
+            </small>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalAtendimentos">-</div>
+                <div class="stat-label">Total</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="semBarbeariaId">-</div>
+                <div class="stat-label">Para Migrar</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="migrados">0</div>
+                <div class="stat-label">Migrados</div>
+            </div>
+        </div>
+        
+        <button class="btn-primary" id="btnMigrate" onclick="startMigration()">
+            🚀 Iniciar Migração
+        </button>
+        
+        <button class="btn-success" id="btnFinish" onclick="finish()" style="display: none;">
+            ✅ Concluir e Ir para Dashboard
+        </button>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
+    <script>
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const logEl = document.getElementById('log');
+        let currentUser = null;
+        
+        function log(message, type = 'info') {
+            const line = document.createElement('div');
+            line.className = `log-line log-${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+            console.log(message);
+        }
+        
+        async function startMigration() {
+            const barbeariaId = document.getElementById('barbeariaId').value.trim();
+            
+            if (!barbeariaId) {
+                alert('⚠️ Por favor, informe o ID da barbearia!');
+                return;
+            }
+            
+            document.getElementById('btnMigrate').disabled = true;
+            logEl.innerHTML = '';
+            
+            try {
+                // Verificar se está autenticado
+                if (!currentUser) {
+                    log('❌ Usuário não autenticado! Redirecionando para login...', 'error');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                    return;
+                }
+                
+                log('✅ Usuário autenticado: ' + currentUser.email, 'success');
+                log('🔍 Buscando atendimentos sem barbeariaId...', 'info');
+                
+                // Buscar todos os atendimentos
+                const snapshot = await db.collection('atendimentos').get();
+                
+                const total = snapshot.size;
+                const semBarbeariaId = snapshot.docs.filter(doc => !doc.data().barbeariaId);
+                
+                log(`✅ Total de atendimentos: ${total}`, 'success');
+                log(`📋 Atendimentos sem barbeariaId: ${semBarbeariaId.length}`, 'info');
+                
+                // Atualizar estatísticas
+                document.getElementById('stats').style.display = 'grid';
+                document.getElementById('totalAtendimentos').textContent = total;
+                document.getElementById('semBarbeariaId').textContent = semBarbeariaId.length;
+                
+                if (semBarbeariaId.length === 0) {
+                    log('✅ Nenhum atendimento para migrar!', 'success');
+                    document.getElementById('btnFinish').style.display = 'block';
+                    return;
+                }
+                
+                log('', 'info');
+                log('🔄 Iniciando migração...', 'info');
+                log('⚠️ Estratégia: Deletar antigos e recriar com barbeariaId', 'info');
+                log('', 'info');
+                
+                // Migrar em lotes (Firestore batch limit = 500)
+                const batchSize = 250; // Reduzido porque fazemos 2 operações (delete + create)
+                let migrated = 0;
+                
+                while (semBarbeariaId.length > 0) {
+                    const batch = db.batch();
+                    const currentBatch = semBarbeariaId.splice(0, batchSize);
+                    
+                    currentBatch.forEach(doc => {
+                        const data = doc.data();
+                        
+                        // Deletar o documento antigo
+                        batch.delete(doc.ref);
+                        
+                        // Criar novo documento com barbeariaId
+                        const newDocRef = db.collection('atendimentos').doc();
+                        batch.set(newDocRef, {
+                            ...data,
+                            barbeariaId: barbeariaId
+                        });
+                    });
+                    
+                    await batch.commit();
+                    migrated += currentBatch.length;
+                    
+                    document.getElementById('migrados').textContent = migrated;
+                    log(`✅ Migrados: ${migrated} atendimentos`, 'success');
+                }
+                
+                log('', 'info');
+                log('🎉 MIGRAÇÃO CONCLUÍDA COM SUCESSO!', 'success');
+                log(`✅ Total de ${migrated} atendimentos migrados para barbeariaId: ${barbeariaId}`, 'success');
+                log('', 'info');
+                log('👉 Clique no botão abaixo para ir ao dashboard', 'info');
+                
+                document.getElementById('btnFinish').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Erro na migração:', error);
+                log(`❌ ERRO: ${error.message}`, 'error');
+                document.getElementById('btnMigrate').disabled = false;
+            }
+        }
+        
+        function finish() {
+            window.location.href = 'index.html';
+        }
+        
+        // Auto-detectar barbeariaId e verificar autenticação
+        window.addEventListener('DOMContentLoaded', () => {
+            log('🔐 Verificando autenticação...', 'info');
+            
+            // Verificar autenticação
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    log('✅ Autenticado como: ' + user.email, 'success');
+                    
+                    // Usar o UID do usuário autenticado como barbeariaId
+                    document.getElementById('barbeariaId').value = user.uid;
+                    log(`💡 ID da barbearia detectado: ${user.uid}`, 'info');
+                    log('👉 Clique em "Iniciar Migração" para começar', 'info');
+                } else {
+                    currentUser = null;
+                    log('❌ Você não está autenticado!', 'error');
+                    log('🔄 Redirecionando para login em 3 segundos...', 'info');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 3000);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

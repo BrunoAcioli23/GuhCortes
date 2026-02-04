@@ -1,0 +1,63 @@
+// ============================================
+// REGRAS DE SEGURANÇA DO FIRESTORE
+// ============================================
+// Copie e cole estas regras no Firebase Console > Firestore Database > Rules
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // COLLECTION: barbearias
+    // Cada usuário só pode acessar sua própria barbearia
+    // ============================================
+    match /barbearias/{userId} {
+      // Permitir leitura e escrita apenas para o dono
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      
+      // Subcollection: servicos
+      // Serviços da barbearia
+      match /servicos/{servicoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+      
+      // Subcollection: produtos
+      // Produtos da barbearia
+      match /produtos/{produtoId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+    
+    // ============================================
+    // COLLECTION: atendimentos
+    // Atendimentos de todas as barbearias
+    // Cada barbearia só pode acessar seus próprios atendimentos
+    // ============================================
+    match /atendimentos/{atendimentoId} {
+      // Permitir leitura apenas se o atendimento pertence à barbearia do usuário
+      allow read: if request.auth != null 
+        && request.auth.uid == resource.data.barbeariaId;
+      
+      // Permitir criação apenas se o barbeariaId no documento é do usuário autenticado
+      allow create: if request.auth != null 
+        && request.auth.uid == request.resource.data.barbeariaId;
+      
+      // Permitir atualização e exclusão apenas se o atendimento pertence à barbearia do usuário
+      allow update, delete: if request.auth != null 
+        && request.auth.uid == resource.data.barbeariaId;
+    }
+  }
+}
+
+// ============================================
+// COMO APLICAR ESTAS REGRAS:
+// ============================================
+// 1. Acesse Firebase Console (https://console.firebase.google.com/)
+// 2. Selecione seu projeto
+// 3. No menu lateral, clique em "Firestore Database"
+// 4. Clique na aba "Regras" (Rules)
+// 5. Copie e cole todo o conteúdo acima
+// 6. Clique em "Publicar" (Publish)
+//
+// IMPORTANTE: Teste suas regras antes de publicar!
+// Use o simulador de regras no console do Firebase

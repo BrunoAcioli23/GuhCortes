@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cadastrar Serviços - Guh Cortes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        .container {
+            background: #16213e;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #bb86fc;
+            margin-bottom: 30px;
+        }
+        .status {
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+        .error {
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+        .info {
+            background: rgba(187, 134, 252, 0.1);
+            border: 1px solid #bb86fc;
+            color: #bb86fc;
+        }
+        button {
+            background: #bb86fc;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #9d6fd4;
+        }
+        button:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        #log {
+            background: #0f1724;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        .log-item {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #bb86fc;
+            padding-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cadastrar Serviços do Guh Cortes</h1>
+        
+        <div class="status info">
+            <strong>Barbearia ID:</strong> 2uv7znnXeGVeIG6zdUchArLHSFD3<br>
+            <strong>Barbearia:</strong> Guh Cortes
+        </div>
+
+        <button id="btnCadastrar" onclick="cadastrarServicos()">
+            Cadastrar Serviços no Firestore
+        </button>
+
+        <div id="log"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+
+    <script>
+        const barbeariaId = '2uv7znnXeGVeIG6zdUchArLHSFD3';
+        const db = firebase.firestore();
+
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            logItem.innerHTML = `<span style="color: ${type === 'success' ? '#00ff00' : type === 'error' ? '#ff0000' : '#bb86fc'}">[${new Date().toLocaleTimeString()}]</span> ${message}`;
+            logDiv.appendChild(logItem);
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function cadastrarServicos() {
+            const btn = document.getElementById('btnCadastrar');
+            btn.disabled = true;
+            btn.textContent = 'Cadastrando...';
+
+            try {
+                addLog('🚀 Iniciando cadastro de serviços...', 'info');
+
+                // Serviços do Guh Cortes
+                const servicos = [
+                    { nome: 'Corte', valor: 35 },
+                    { nome: 'Corte Social', valor: 25 },
+                    { nome: 'Sobrancelha', valor: 5 },
+                    { nome: 'Bigode', valor: 5 },
+                    { nome: 'Cavanhaque', valor: 15 },
+                    { nome: 'Alinhamento', valor: 15 },
+                    { nome: 'Barba', valor: 30 },
+                    { nome: 'Pigmentação', valor: 15 },
+                    { nome: 'Luzes', valor: 120 },
+                    { nome: 'Platinado', valor: 150 },
+                    { nome: 'Platinado Cabelo Grande', valor: 230 }
+                ];
+
+                addLog(`📋 Total de serviços a cadastrar: ${servicos.length}`, 'info');
+
+                // Verificar se já existem serviços
+                const barbeariaRef = db.collection('barbearias').doc(barbeariaId);
+                const barbeariaDoc = await barbeariaRef.get();
+                
+                if (!barbeariaDoc.exists) {
+                    throw new Error('Barbearia não encontrada no banco de dados!');
+                }
+
+                const currentData = barbeariaDoc.data();
+                const currentServicos = currentData.servicos || [];
+
+                if (currentServicos.length > 0) {
+                    addLog(`⚠️ Já existem ${currentServicos.length} serviços cadastrados`, 'info');
+                    const confirmar = confirm(`Já existem ${currentServicos.length} serviços cadastrados. Deseja substituí-los?`);
+                    if (!confirmar) {
+                        addLog('❌ Operação cancelada pelo usuário', 'error');
+                        btn.disabled = false;
+                        btn.textContent = 'Cadastrar Serviços no Firestore';
+                        return;
+                    }
+                }
+
+                // Preparar serviços com IDs
+                const servicosComId = servicos.map((servico, index) => ({
+                    id: `servico-${Date.now()}-${index}`,
+                    nome: servico.nome,
+                    valor: servico.valor,
+                    dataCriacao: new Date().toISOString()
+                }));
+
+                // Atualizar no Firestore
+                await barbeariaRef.update({
+                    servicos: servicosComId,
+                    dataAtualizacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                addLog('✅ Serviços cadastrados com sucesso!', 'success');
+                
+                servicosComId.forEach((servico, index) => {
+                    addLog(`  ${index + 1}. ${servico.nome} - R$ ${servico.valor.toFixed(2)}`, 'success');
+                });
+
+                addLog('', 'info');
+                addLog('✨ Processo concluído! Os serviços agora estão no Firestore.', 'success');
+                addLog('📌 Você pode fechar esta página.', 'info');
+
+                btn.textContent = '✅ Concluído!';
+
+            } catch (error) {
+                console.error('Erro ao cadastrar serviços:', error);
+                addLog(`❌ Erro: ${error.message}`, 'error');
+                btn.disabled = false;
+                btn.textContent = 'Tentar Novamente';
+            }
+        }
+
+        // Log inicial
+        addLog('✅ Firebase conectado', 'success');
+        addLog('📱 Pronto para cadastrar serviços', 'info');
+    </script>
+</body>
+</html>

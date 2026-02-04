@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurar Barbearia - BarberShop Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="config-page">
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <!-- Logo e Nome -->
+            <div class="logo-container">
+                <img id="headerLogo" src="" alt="Logo" class="logo" style="display: none;">
+                <h1 id="headerNome" class="brand-name">Barbearia</h1>
+            </div>
+            
+            <!-- Desktop: Plano + Menu Usuário -->
+            <div class="desktop-menu">
+                <span id="headerPlano" class="plan-badge-header clickable" onclick="window.location.href='select-plan.html'" title="Clique para alterar o plano">Plano Inicial</span>
+                <button class="btn-text-menu" onclick="window.open('https://wa.me/5511942138664?text=Olá,%20preciso%20de%20suporte', '_blank')">
+                    Suporte
+                </button>
+                <button class="btn-text-menu" onclick="window.location.href='index.html'">
+                    Dashboard
+                </button>
+            </div>
+            
+            <!-- Mobile: Menu Hambúrguer -->
+            <button class="btn-hamburger" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+        
+        <!-- Menu Mobile (oculto por padrão) -->
+        <div class="mobile-menu" id="mobileMenu">
+            <button class="menu-item" onclick="window.location.href='index.html'">
+                🏠 Dashboard
+            </button>
+            <button class="menu-item" onclick="window.location.href='select-plan.html'">
+                💎 Mudar Plano
+            </button>
+            <button class="menu-item" onclick="window.open('https://wa.me/5511942138664?text=Olá,%20preciso%20de%20suporte', '_blank')">
+                📞 Suporte
+            </button>
+            <button class="menu-item logout-item" onclick="logout()">
+                🚪 Sair
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="config-header">
+            <h1 class="config-title">Configure sua Barbearia</h1>
+            <p class="config-subtitle">Personalize as informações da sua barbearia</p>
+        </div>
+
+        <div class="config-card">
+            <!-- Informação do Plano -->
+            <div class="plan-info">
+                <div class="plan-badge" id="planBadge">Carregando plano...</div>
+                <h3 style="color: var(--color-white); margin-bottom: 0.5rem;">Seu Plano Atual</h3>
+                <p style="color: var(--color-accent); margin-bottom: 1rem;" id="planDescription">
+                    Carregando informações...
+                </p>
+                <div class="plan-modules">
+                    <h4>Módulos Inclusos:</h4>
+                    <ul id="planModulesList">
+                        <li>Carregando...</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <a href="select-plan.html" class="btn-secondary">Alterar Plano</a>
+                </div>
+            </div>
+
+            <!-- Upload de Logo -->
+            <div class="logo-upload-section">
+                <h3 style="color: var(--color-white); margin-bottom: 1rem;">Logo da Barbearia</h3>
+                <div class="logo-preview" id="logoPreview">
+                    <span class="logo-placeholder">📷</span>
+                </div>
+                <input type="file" id="logoInput" accept="image/*">
+                <label for="logoInput" class="btn-upload">Escolher Logo</label>
+                <p style="color: var(--color-accent); font-size: 0.85rem; margin-top: 0.5rem;">
+                    Formatos aceitos: JPG, PNG. Tamanho recomendado: 500x500px
+                </p>
+            </div>
+
+            <!-- Formulário de Configuração -->
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="barbeariaNome">Nome da Barbearia</label>
+                    <input type="text" id="barbeariaNome" required placeholder="Ex: Guh Cortes">
+                </div>
+
+                <div class="form-group">
+                    <label for="barbeariaEndereco">Endereço (Opcional)</label>
+                    <input type="text" id="barbeariaEndereco" placeholder="Rua, número, bairro">
+                </div>
+
+                <div class="form-group">
+                    <label for="barbeariaTelefone">Telefone (Opcional)</label>
+                    <input type="tel" id="barbeariaTelefone" placeholder="(00) 00000-0000">
+                </div>
+
+                <div class="form-group">
+                    <label for="barbeariaInstagram">Instagram (Opcional)</label>
+                    <input type="text" id="barbeariaInstagram" placeholder="@suabarbearia">
+                </div>
+
+                <div class="form-group">
+                    <label for="barbeariaDescricao">Descrição (Opcional)</label>
+                    <textarea id="barbeariaDescricao" rows="3" placeholder="Fale um pouco sobre sua barbearia..." style="width: 100%; padding: 0.85rem; background: var(--color-black); border: 2px solid var(--color-gray); border-radius: 8px; color: var(--color-white); font-size: 0.95rem; font-family: 'Poppins', sans-serif; resize: vertical;"></textarea>
+                </div>
+
+                <button type="submit" class="btn-primary">Salvar Configurações</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    
+    <script src="firebase-config.js"></script>
+    <script src="session-manager.js"></script>
+    <script src="config.js"></script>
+    
+    <!-- Menu Mobile Script -->
+    <script>
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
+        }
+        
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', (e) => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const hamburger = document.querySelector('.btn-hamburger');
+            
+            if (mobileMenu && hamburger) {
+                if (!mobileMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            }
+        });
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Desenvolvido por <a href="https://www.efforedevelopment.com.br" target="_blank" rel="noopener noreferrer">Effore Development</a></p>
+    </footer>
+</body>
+</html>

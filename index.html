@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Guh Cortes - Gerenciamento</title>
+    <title>BarberShop Manager - Gerenciamento</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="auth-styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -13,13 +14,45 @@
     <!-- Header -->
     <header class="header">
         <div class="container">
+            <!-- Logo e Nome -->
             <div class="logo-container">
-                <img src="LogoGuhCortes.jpg" alt="Guh Cortes" class="logo">
-                <h1 class="brand-name">Guh Cortes</h1>
+                <img id="headerLogo" src="" alt="Logo" class="logo" style="display: none;">
+                <h1 id="headerNome" class="brand-name">Barbearia</h1>
             </div>
-            <div class="user-info">
-                <span id="currentDate"></span>
+            
+            <!-- Desktop: Plano + Menu Usuário -->
+            <div class="desktop-menu">
+                <span id="headerPlano" class="plan-badge-header clickable" onclick="window.location.href='select-plan.html'" title="Clique para alterar o plano">Plano Inicial</span>
+                <button class="btn-text-menu" onclick="window.open('https://wa.me/5511942138664?text=Olá,%20preciso%20de%20suporte', '_blank')">
+                    Suporte
+                </button>
+                <button class="btn-text-menu" onclick="window.location.href='config.html'">
+                    Configurações
+                </button>
             </div>
+            
+            <!-- Mobile: Menu Hambúrguer -->
+            <button class="btn-hamburger" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+        
+        <!-- Menu Mobile (oculto por padrão) -->
+        <div class="mobile-menu" id="mobileMenu">
+            <button class="menu-item" onclick="window.location.href='select-plan.html'">
+                💎 Mudar Plano
+            </button>
+            <button class="menu-item" onclick="window.location.href='config.html'">
+                ⚙️ Configurações
+            </button>
+            <button class="menu-item" onclick="window.open('https://wa.me/5511942138664?text=Olá,%20preciso%20de%20suporte', '_blank')">
+                📞 Suporte
+            </button>
+            <button class="menu-item logout-item" onclick="logout()">
+                🚪 Sair
+            </button>
         </div>
     </header>
 
@@ -29,7 +62,7 @@
             <div class="tabs-container">
                 <button class="tab-btn active" data-tab="inicio">Início</button>
                 <button class="tab-btn" data-tab="atendimentos">Atendimentos</button>
-                <button class="tab-btn" data-tab="gerenciar">Gerenciar</button>
+                <button class="tab-btn" data-tab="gerenciar">Cadastro</button>
             </div>
         </div>
     </nav>
@@ -57,12 +90,12 @@
                     </div>
                 </section>
 
-                <!-- Dashboard Cards -->
+                <!-- 1. Cards de Resumo -->
                 <section class="dashboard-cards">
                     <div class="card stat-card">
                         <div class="stat-content">
                             <h3 class="stat-value" id="totalClientes">0</h3>
-                            <p class="stat-label">Total de Clientes</p>
+                            <p class="stat-label">Total de Atendimentos</p>
                         </div>
                     </div>
 
@@ -76,15 +109,15 @@
                     <div class="card stat-card">
                         <div class="stat-content">
                             <h3 class="stat-value" id="ticketMedio">R$ 0,00</h3>
-                            <p class="stat-label">Ticket Médio</p>
+                            <p class="stat-label">Média por Cliente</p>
                         </div>
                     </div>
                 </section>
 
-                <!-- Gráfico de Serviços -->
+                <!-- 2. Gráfico de Distribuição (Serviços + Consumo) -->
                 <section class="card chart-section">
                     <h2 class="section-title">
-                        Distribuição de Serviços
+                        Distribuição de Serviços e Consumo
                     </h2>
                     <div id="servicesChart" class="chart-container"></div>
                     <div id="noDataMessage" class="no-data-message">
@@ -92,10 +125,10 @@
                     </div>
                 </section>
 
-                <!-- Lista de Atendimentos Recentes -->
+                <!-- 3. Últimos 5 Atendimentos -->
                 <section class="card">
                     <h2 class="section-title">
-                        Atendimentos Recentes
+                        Últimos 5 Atendimentos
                     </h2>
                     <div id="atendimentosLista" class="atendimentos-lista">
                         <p class="no-data-message">Nenhum atendimento para exibir</p>
@@ -107,55 +140,158 @@
             <!-- Aba: Atendimentos -->
             <div class="tab-content" id="tab-atendimentos">
             
-            <!-- Registro de Atendimento -->
+            <!-- Botão Novo Atendimento -->
             <section class="card registro-section">
-                <h2 class="section-title">
-                    Novo Atendimento
-                </h2>
-                <form id="atendimentoForm" class="form">
-                    <div class="form-group">
-                        <label for="clienteNome">Nome do Cliente (opcional)</label>
-                        <input type="text" id="clienteNome" placeholder="Digite o nome do cliente">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Serviços Realizados</label>
-                        <div class="services-grid" id="servicosGrid">
-                            <p class="no-data-message">Carregando serviços...</p>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Consumo</label>
-                        <div id="consumoGrid" class="services-grid">
-                            <p class="no-data-message">Nenhum produto cadastrado. Vá em Gerenciar para adicionar produtos.</p>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="valorTotal">Valor Total</label>
-                        <input type="number" id="valorTotal" placeholder="0.00" step="0.01" readonly>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary">
-                        Registrar Atendimento
-                    </button>
-                </form>
+                <button id="btnNovoAtendimento" class="btn btn-primary btn-large">
+                    + Novo Atendimento
+                </button>
             </section>
+            
+            <!-- Modal Novo Atendimento -->
+            <div id="modalAtendimento" class="modal">
+                <div class="modal-content modal-atendimento">
+                    <div class="modal-header">
+                        <h2 class="modal-title">Novo Atendimento</h2>
+                        <button class="modal-close" id="closeModalAtendimento">&times;</button>
+                    </div>
+                    <form id="atendimentoForm" class="modal-form">
+                        <!-- Data e Hora -->
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="atendimentoData">Data</label>
+                                <input type="date" id="atendimentoData" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="atendimentoHora">Hora</label>
+                                <input type="time" id="atendimentoHora" required>
+                            </div>
+                        </div>
+
+                        <!-- Cliente com Autocomplete -->
+                        <div class="form-group">
+                            <label for="clienteNome">Nome do Cliente *</label>
+                            <div class="autocomplete-wrapper">
+                                <input type="text" id="clienteNome" class="input-with-icon" placeholder="Digite o nome do cliente" required autocomplete="off">
+                                <div id="clienteAutocomplete" class="autocomplete-dropdown"></div>
+                            </div>
+                            <small class="form-hint">Digite para ver sugestões de clientes anteriores</small>
+                        </div>
+
+                        <!-- Busca de Serviços -->
+                        <div class="form-group">
+                            <label>Serviços Realizados *</label>
+                            <div class="search-box">
+                                <input type="text" id="searchServicos" class="search-input" placeholder="Buscar serviços...">
+                                <div class="services-counter">
+                                    <span id="servicosCount">0</span> selecionado(s)
+                                </div>
+                            </div>
+                            <div class="services-selection" id="servicosSelection">
+                                <p class="no-data-message">Carregando serviços...</p>
+                            </div>
+                        </div>
+
+                        <!-- Valor Total com Preview -->
+                        <div class="form-group">
+                            <label for="valorTotal">Valor Total</label>
+                            <div class="valor-total-wrapper">
+                                <span class="currency-symbol">R$</span>
+                                <input type="number" id="valorTotal" placeholder="0.00" step="0.01" required>
+                                <span class="valor-status" id="valorStatus">✓</span>
+                            </div>
+                            <small class="form-hint">Valor calculado automaticamente</small>
+                        </div>
+                        
+                        <!-- Observação -->
+                        <div class="form-group">
+                            <label for="observacao">Observação</label>
+                            <textarea id="observacao" placeholder="Adicione uma observação (opcional)" rows="3"></textarea>
+                            <small class="char-count"><span id="obsCount">0</span>/200 caracteres</small>
+                        </div>
+
+                        <!-- Resumo do Atendimento -->
+                        <div class="atendimento-resumo" id="atendimentoResumo">
+                            <h4>Resumo</h4>
+                            <div class="resumo-item">
+                                <span>Serviços:</span>
+                                <strong id="resumoServicos">Nenhum selecionado</strong>
+                            </div>
+                            <div class="resumo-item">
+                                <span>Total:</span>
+                                <strong id="resumoTotal" class="resumo-total">R$ 0,00</strong>
+                            </div>
+                        </div>
+
+                        <div class="modal-actions">
+                            <button type="button" class="btn btn-secondary" id="btnCancelarAtendimento">Cancelar</button>
+                            <button type="submit" class="btn btn-primary" id="btnSubmitAtendimento">
+                                <span class="btn-text">Registrar Atendimento</span>
+                                <span class="btn-loader" style="display: none;">⏳</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
             
             <!-- Tabela de Atendimentos -->
             <section class="card">
                 <h2 class="section-title">
                     Todos os Atendimentos
                 </h2>
-                <div class="table-controls">
-                    <div class="search-box">
-                        <input type="text" id="searchAtendimentos" class="search-input" placeholder="Buscar por cliente...">
+                
+                <!-- Filtros da Tabela -->
+                <div class="table-filters">
+                    <div class="filter-row">
+                        <div class="filter-field">
+                            <label>Cliente</label>
+                            <input type="text" id="filterCliente" class="filter-input" placeholder="Nome do cliente">
+                        </div>
+                        <div class="filter-field">
+                            <label>Serviço</label>
+                            <select id="filterServico" class="filter-select">
+                                <option value="">Todos os serviços</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label>Dia</label>
+                            <input type="number" id="filterDia" class="filter-input" placeholder="DD" min="1" max="31">
+                        </div>
+                        <div class="filter-field">
+                            <label>Mês</label>
+                            <select id="filterMes" class="filter-select">
+                                <option value="">Todos</option>
+                                <option value="01">Janeiro</option>
+                                <option value="02">Fevereiro</option>
+                                <option value="03">Março</option>
+                                <option value="04">Abril</option>
+                                <option value="05">Maio</option>
+                                <option value="06">Junho</option>
+                                <option value="07">Julho</option>
+                                <option value="08">Agosto</option>
+                                <option value="09">Setembro</option>
+                                <option value="10">Outubro</option>
+                                <option value="11">Novembro</option>
+                                <option value="12">Dezembro</option>
+                            </select>
+                        </div>
+                        <div class="filter-field">
+                            <label>Ano</label>
+                            <input type="number" id="filterAno" class="filter-input" placeholder="AAAA" min="2020" max="2050">
+                        </div>
+                        <div class="filter-field">
+                            <label>Hora</label>
+                            <input type="time" id="filterHora" class="filter-input">
+                        </div>
                     </div>
-                    <div class="table-info">
-                        <span id="totalAtendimentosTabela">0 atendimentos</span>
+                    <div class="filter-actions">
+                        <button id="btnAplicarFiltros" class="btn btn-primary btn-small">Aplicar Filtros</button>
+                        <button id="btnLimparFiltros" class="btn btn-secondary btn-small">Limpar</button>
+                        <div class="table-info">
+                            <span id="totalAtendimentosTabela">0 atendimentos</span>
+                        </div>
                     </div>
                 </div>
+                
                 <div class="table-wrapper">
                     <table class="atendimentos-table" id="atendimentosTable">
                         <thead>
@@ -179,14 +315,53 @@
             </div>
             <!-- Fim Aba: Atendimentos -->
 
-            <!-- Aba: Gerenciar -->
+            <!-- Aba: Cadastro -->
             <div class="tab-content" id="tab-gerenciar">
                 
-                <!-- Gerenciar Serviços -->
+                <!-- Cadastrar Clientes -->
                 <section class="card">
                     <h2 class="section-title">
-                        Gerenciar Serviços
+                        Cadastrar Clientes
                     </h2>
+                    
+                    <form id="clienteForm" class="form form-inline">
+                        <div class="form-group">
+                            <label for="clienteCadastroNome">Nome do Cliente</label>
+                            <input type="text" id="clienteCadastroNome" placeholder="Ex: João Silva" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="clienteTelefone">Telefone (opcional)</label>
+                            <input type="tel" id="clienteTelefone" placeholder="(00) 00000-0000">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Adicionar Cliente</button>
+                    </form>
+                    
+                    <div class="table-wrapper" style="margin-top: 20px;">
+                        <table class="atendimentos-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Telefone</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientesTableBody">
+                                <tr class="no-data-row">
+                                    <td colspan="3" class="no-data-message">Nenhum cliente cadastrado</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+                
+                <!-- Cadastrar Serviços -->
+                <section class="card">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            Cadastrar Serviços
+                        </h2>
+                        <span class="section-badge" id="servicosCount">0 serviços</span>
+                    </div>
                     
                     <form id="servicoForm" class="form form-inline">
                         <div class="form-group">
@@ -200,29 +375,24 @@
                         <button type="submit" class="btn btn-primary">Adicionar Serviço</button>
                     </form>
                     
-                    <div class="table-wrapper" style="margin-top: 20px;">
-                        <table class="atendimentos-table">
-                            <thead>
-                                <tr>
-                                    <th>Serviço</th>
-                                    <th>Valor</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="servicosTableBody">
-                                <tr class="no-data-row">
-                                    <td colspan="3" class="no-data-message">Nenhum serviço cadastrado</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="services-grid" id="servicosTableBody">
+                        <div class="no-data-card">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M20 7h-9M14 17H5M18 12h-2M9 3v18"/>
+                            </svg>
+                            <p>Nenhum serviço cadastrado</p>
+                        </div>
                     </div>
                 </section>
 
-                <!-- Gerenciar Produtos de Consumo -->
+                <!-- Cadastrar Produtos de Consumo -->
                 <section class="card">
-                    <h2 class="section-title">
-                        Gerenciar Produtos de Consumo
-                    </h2>
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            Cadastrar Produtos de Consumo
+                        </h2>
+                        <span class="section-badge" id="produtosCount">0 produtos</span>
+                    </div>
                     
                     <form id="produtoForm" class="form form-inline">
                         <div class="form-group">
@@ -236,26 +406,18 @@
                         <button type="submit" class="btn btn-primary">Adicionar Produto</button>
                     </form>
                     
-                    <div class="table-wrapper" style="margin-top: 20px;">
-                        <table class="atendimentos-table">
-                            <thead>
-                                <tr>
-                                    <th>Produto</th>
-                                    <th>Valor</th>
-                                    <th>Ações</th>
-                                </tr>
-                            </thead>
-                            <tbody id="produtosTableBody">
-                                <tr class="no-data-row">
-                                    <td colspan="3" class="no-data-message">Nenhum produto cadastrado</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div class="services-grid" id="produtosTableBody">
+                        <div class="no-data-card">
+                            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                            <p>Nenhum produto cadastrado</p>
+                        </div>
                     </div>
                 </section>
                 
             </div>
-            <!-- Fim Aba: Gerenciar -->
+            <!-- Fim Aba: Cadastro -->
 
         </div>
     </main>
@@ -308,10 +470,39 @@
 
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
     
     <!-- App Scripts -->
     <script src="firebase-config.js"></script>
+    <script src="session-manager.js"></script>
+    <script src="firebase-data-manager.js"></script>
     <script src="app.js"></script>
+    
+    <!-- Menu Mobile Script -->
+    <script>
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('active');
+        }
+        
+        // Fechar menu ao clicar fora
+        document.addEventListener('click', (e) => {
+            const mobileMenu = document.getElementById('mobileMenu');
+            const hamburger = document.querySelector('.btn-hamburger');
+            
+            if (mobileMenu && hamburger) {
+                if (!mobileMenu.contains(e.target) && !hamburger.contains(e.target)) {
+                    mobileMenu.classList.remove('active');
+                }
+            }
+        });
+    </script>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Desenvolvido por <a href="https://www.efforedevelopment.com.br" target="_blank" rel="noopener noreferrer">Effore Development</a></p>
+    </footer>
 </body>
 </html>

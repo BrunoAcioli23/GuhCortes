@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migração Entre Projetos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+        }
+        h1 { color: #333; margin-bottom: 10px; font-size: 32px; }
+        .subtitle { color: #666; margin-bottom: 30px; }
+        .info {
+            background: #d1ecf1;
+            border-left: 4px solid #17a2b8;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        .config-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .config-section h3 { margin-bottom: 15px; color: #333; }
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 150px;
+            resize: vertical;
+        }
+        textarea:focus { outline: none; border-color: #667eea; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .log-line { margin: 5px 0; }
+        .log-success { color: #28a745; }
+        .log-error { color: #dc3545; }
+        .log-info { color: #17a2b8; }
+        button {
+            width: 100%;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+        .btn-primary { background: #667eea; color: white; }
+        .btn-primary:hover:not(:disabled) {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn-success { background: #28a745; color: white; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .stat-number { font-size: 28px; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Migração Entre Projetos</h1>
+        <p class="subtitle">Copiar dados do Guh Cortes antigo para o novo sistema</p>
+        
+        <div class="info">
+            <strong>📋 O que será feito:</strong><br>
+            1. Conectar no projeto ANTIGO (Guh Cortes original)<br>
+            2. Buscar TODOS os atendimentos (com clientes)<br>
+            3. Conectar no projeto NOVO (effore-barber)<br>
+            4. Copiar para a barbearia "Guh Cortes" no novo sistema<br>
+            5. Histórico completo migrado! ✅
+        </div>
+        
+        <div class="warning">
+            <strong>⚠️ IMPORTANTE:</strong><br>
+            Forneça as credenciais de AMBOS os projetos Firebase abaixo.
+        </div>
+        
+        <div class="config-section">
+            <h3>🔵 Projeto ANTIGO (Guh Cortes)</h3>
+            <textarea id="oldConfig" placeholder='Cole o firebaseConfig completo do projeto ANTIGO aqui'></textarea>
+        </div>
+        
+        <div class="config-section">
+            <h3>🟢 Projeto NOVO (effore-barber)</h3>
+            <textarea id="newConfig" placeholder='Cole o firebaseConfig completo do projeto NOVO aqui'></textarea>
+        </div>
+        
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalOld">-</div>
+                <div class="stat-label">Projeto Antigo</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalNew">-</div>
+                <div class="stat-label">Projeto Novo (antes)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="migrados">0</div>
+                <div class="stat-label">Copiados</div>
+            </div>
+        </div>
+        
+        <button class="btn-primary" id="btnMigrate">🚀 Iniciar Migração</button>
+        <button class="btn-success" id="btnFinish" style="display: none;">✅ Ir para Dashboard</button>
+        
+        <div class="log" id="log"></div>
+    </div>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        const logEl = document.getElementById('log');
+        let oldApp, newApp, oldDb, newDb;
+        
+        function log(msg, type = 'info') {
+            const line = document.createElement('div');
+            line.className = 'log-line log-' + type;
+            line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+            logEl.appendChild(line);
+            logEl.scrollTop = logEl.scrollHeight;
+        }
+        
+        document.getElementById('btnMigrate').onclick = async function() {
+            this.disabled = true;
+            logEl.innerHTML = '';
+            
+            try {
+                const oldConfigText = document.getElementById('oldConfig').value.trim();
+                const newConfigText = document.getElementById('newConfig').value.trim();
+                
+                if (!oldConfigText || !newConfigText) {
+                    alert('⚠️ Preencha AMBAS as configurações!');
+                    this.disabled = false;
+                    return;
+                }
+                
+                log('🔧 Inicializando conexões...', 'info');
+                
+                const oldConfig = JSON.parse(oldConfigText);
+                const newConfig = JSON.parse(newConfigText);
+                
+                oldApp = firebase.initializeApp(oldConfig, 'old');
+                oldDb = oldApp.firestore();
+                log('✅ Conectado ao projeto ANTIGO: ' + oldConfig.projectId, 'success');
+                
+                newApp = firebase.initializeApp(newConfig, 'new');
+                newDb = newApp.firestore();
+                log('✅ Conectado ao projeto NOVO: ' + newConfig.projectId, 'success');
+                
+                log('', 'info');
+                log('🔍 Buscando atendimentos...', 'info');
+                
+                const oldSnapshot = await oldDb.collection('atendimentos').get();
+                log('📋 Encontrados ' + oldSnapshot.size + ' atendimentos', 'success');
+                
+                const newSnapshotBefore = await newDb.collection('atendimentos').get();
+                log('📊 Projeto novo tem ' + newSnapshotBefore.size + ' atendimentos', 'info');
+                
+                document.getElementById('stats').style.display = 'grid';
+                document.getElementById('totalOld').textContent = oldSnapshot.size;
+                document.getElementById('totalNew').textContent = newSnapshotBefore.size;
+                
+                if (oldSnapshot.empty) {
+                    log('⚠️ Nenhum atendimento no projeto antigo!', 'error');
+                    document.getElementById('btnFinish').style.display = 'block';
+                    return;
+                }
+                
+                const barbeariaId = prompt('🔑 Digite o barbeariaId (UID):\n\nExemplo: 2uv7znnXeGVeIG6zdUchArLHSFD3');
+                
+                if (!barbeariaId || barbeariaId.trim() === '') {
+                    log('❌ Cancelado: barbeariaId não informado', 'error');
+                    this.disabled = false;
+                    return;
+                }
+                
+                log('', 'info');
+                log('🔄 Copiando dados...', 'info');
+                log('🎯 Destino: Guh Cortes no novo projeto', 'info');
+                log('🔑 barbeariaId: ' + barbeariaId, 'info');
+                log('', 'info');
+                
+                let migrated = 0;
+                const atendimentos = oldSnapshot.docs;
+                const batchSize = 250;
+                
+                while (atendimentos.length > 0) {
+                    const batch = newDb.batch();
+                    const currentBatch = atendimentos.splice(0, batchSize);
+                    
+                    currentBatch.forEach(doc => {
+                        const data = doc.data();
+                        const newRef = newDb.collection('atendimentos').doc();
+                        batch.set(newRef, {
+                            ...data,
+                            barbeariaId: barbeariaId,
+                            data: data.data || firebase.firestore.Timestamp.now()
+                        });
+                    });
+                    
+                    await batch.commit();
+                    migrated += currentBatch.length;
+                    document.getElementById('migrados').textContent = migrated;
+                    log('✅ Copiados: ' + migrated + ' atendimentos', 'success');
+                }
+                
+                log('', 'info');
+                log('🎉 MIGRAÇÃO CONCLUÍDA!', 'success');
+                log('✅ ' + migrated + ' atendimentos copiados', 'success');
+                log('🏪 Salvos na barbearia Guh Cortes', 'success');
+                log('🔑 barbeariaId: ' + barbeariaId, 'success');
+                log('', 'info');
+                log('👉 Agora acesse o dashboard!', 'info');
+                
+                document.getElementById('btnFinish').style.display = 'block';
+                
+            } catch (error) {
+                log('❌ ERRO: ' + error.message, 'error');
+                if (error.message.includes('JSON')) {
+                    log('💡 Verifique o formato do firebaseConfig!', 'info');
+                }
+                this.disabled = false;
+            }
+        };
+        
+        document.getElementById('btnFinish').onclick = function() {
+            window.location.href = 'index.html';
+        };
+        
+        window.addEventListener('DOMContentLoaded', function() {
+            log('📝 Aguardando configurações...', 'info');
+            log('', 'info');
+            log('📌 Cole o firebaseConfig do projeto ANTIGO', 'info');
+            log('📌 Cole o firebaseConfig do projeto NOVO', 'info');
+            log('📌 Clique em "Iniciar Migração"', 'info');
+            
+            const newConfigValue = `{
+  "apiKey": "AIzaSyAH-_zCpZ7Pb9405V7c3dFyJqsh3zWGUYY",
+  "authDomain": "effore-barber.firebaseapp.com",
+  "projectId": "effore-barber",
+  "storageBucket": "effore-barber.firebasestorage.app",
+  "messagingSenderId": "1049002743190",
+  "appId": "1:1049002743190:web:59d9fb71c8b4be88e4f9b7"
+}`;
+            
+            document.getElementById('newConfig').value = newConfigValue;
+            log('✅ Config do projeto NOVO pré-preenchida!', 'success');
+        });
+    </script>
+</body>
+</html>
